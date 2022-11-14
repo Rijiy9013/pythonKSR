@@ -5,13 +5,14 @@ class MyProgram:
     window = tk.Tk()
     screen_width = window.winfo_screenwidth()
     screen_height = window.winfo_screenheight()
-    cars = [['a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'q3', 'q5', 'q7', 'q8'],
+    marks = [['a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'q3', 'q5', 'q7', 'q8'],
             ['golf', 'polo', 'passat', 'tiguan', 'touareg', 'superb']]
     brands = [['audi'], ['volkswagen']]
     shortsBrands = [['ауди', 'aud', 'auid'], ['vk', 'volkwagen', 'vlokswagen', 'wagen', 'volks']]
     shortsMarks = [['а2', 'а3', 'а4', 'а5', 'а6', 'а7', 'а8'], ['гольф', 'голф', 'поло', 'полик', 'пассат']]
     dic = {}
     mark_from_user = ''
+    brand_from_user = ''
     model_from_user = ''
 
     def __init__(self):
@@ -31,7 +32,7 @@ class MyProgram:
 
     def update_dic(self):
         for i in range(len(self.brands)):
-            self.dic.update(dict.fromkeys(self.brands[i], self.cars[i]))
+            self.dic.update(dict.fromkeys(self.brands[i], self.marks[i]))
 
     def make_main_buttons(self):
         # lbl = tk.Label(self.window, text=(', '.join(map(str, self.dic['audi']))))
@@ -43,19 +44,67 @@ class MyProgram:
         self.window.bind("<Return>", lambda event: wait_var.set(1))
         self.window.wait_variable(wait_var)
         self.window.unbind("<Return>")
-        self.mark_from_user = self.get_mark(mark_entry.get())
-        print(self.mark_from_user)
+        self.brand_from_user = self.get_brand(mark_entry.get())
+        if self.mark_from_user != '':
+            self.check_car()
 
-    def get_mark(self, arg):
-        if ' ' in arg: #если пробел, чтобы считать и марку, и модель. добавить проверку на символ после пробела
-            pass
+    def get_brand(self, arg):
+        if ' ' in arg.lower(): #если пробел, чтобы считать и марку, и модель. добавить проверку на символ после пробела
+            for i, val in enumerate(arg.lower()):
+                if val == ' ' and i != len(arg.lower()):
+                    self.mark_from_user = self.get_mark(arg.lower()[i+1:])
+                    arg = arg.lower()[:i]
         for i in range(len(self.brands)): #проверка бренд без опечаток
             if arg.lower() in self.brands[i]:
                 return arg
-        for i in range(len(self.brands)): #проверка на опечатку
-            if arg.lower() in self.brands[i]:
-                return arg
+        for i in range(len(self.shortsBrands)): #проверка на опечатку
+            if arg.lower() in self.shortsBrands[i]:
+                return self.brands[i][0]
 
+    def get_mark(self, arg):
+        for i in range(len(self.marks)): #проверка бренд без опечаток
+            if arg.lower() in self.marks[i]:
+                return arg
+        for i in range(len(self.shortsMarks)): #проверка на опечатку не сделана
+            if arg.lower() in self.shortsMarks[i]:
+                return self.marks[i][0]
+
+    def check_car(self):
+        temp = tk.IntVar()
+        check_win = tk.Toplevel(self.window)
+        check_win.wm_title('Проверка')
+        check_win.resizable(False, False)
+        app_width = 250
+        app_height = 125
+        x = (self.screen_width / 2) - (app_width / 2)
+        y = (self.screen_height / 2) - (app_height / 2)
+        check_win.geometry(f'{app_width}x{app_height}+{int(x)}+{int(y)}')
+        tk.Label(check_win, text=self.brand_from_user + ' ' + self.mark_from_user + ' - это Ваша машина?').grid(row=0, column=0)
+        yes_btn = tk.Button(check_win, text='Да', command=lambda: temp.set(1))
+        yes_btn.grid(row=1, column=0)
+        no_btn = tk.Button(check_win, text='Нет', command=lambda: temp.set(2))
+        no_btn.grid(row=1, column=1)
+        check_win.wait_variable(temp)
+        if temp == 1:
+            self.show_info()
+        else:
+            temp = tk.IntVar()
+            no_win = tk.Toplevel(check_win)
+            no_win.wm_title('Проверка')
+            no_win.resizable(False, False)
+            app_width = 250
+            app_height = 75
+            x = (self.screen_width / 2) - (app_width / 2)
+            y = (self.screen_height / 2) - (app_height / 2)
+            no_win.geometry(f'{app_width}x{app_height}+{int(x)}+{int(y)}')
+            tk.Label(no_win, text='Введите название Вашей машины еще раз').grid(row=0, column=0)
+            tk.Button(no_win, text='Ок', command=lambda: temp.set(1)).grid(row=1, column=0)
+            no_win.wait_variable(temp)
+            no_win.destroy()
+        check_win.destroy()
+
+    def show_info(self):
+        pass
 
 
 program = MyProgram()
