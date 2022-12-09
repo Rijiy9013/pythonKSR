@@ -1,6 +1,7 @@
 import csv
 import tkinter as tk
 from tkinter import ttk
+import random
 
 
 class MyProgram:
@@ -13,6 +14,7 @@ class MyProgram:
     dicEmis = {}
     mark_from_user = ''
     brand_from_user = ''
+    fuel = ''
     engine_size = 0
     avg_km_per_year = 20000
     norm_of_co2 = 130
@@ -35,7 +37,7 @@ class MyProgram:
         MyProgram.window.mainloop()
 
     def update_dic(self):
-        with open("CO2_Emissions_Canada.csv", mode="r") as file:
+        with open("CO2_Emissions.csv", mode="r") as file:
             reader = list(csv.reader(file))
             temp = []
             flag = len(reader) - 1
@@ -57,7 +59,7 @@ class MyProgram:
 
     def get_emissions(self):
         lst = []
-        with open("CO2_Emissions_Canada.csv", mode="r") as file:
+        with open("CO2_Emissions.csv", mode="r") as file:
             reader = list(csv.reader(file))
             for i in range(len(reader)):
                 if reader[i][0].lower() == self.brand_from_user.lower() and reader[i][1].lower() == self.mark_from_user.lower() and reader[i][3].lower() == self.engine_size:
@@ -67,6 +69,26 @@ class MyProgram:
                     lst.append(reader[i][10])
                     lst.append(reader[i][11])
                     return lst
+
+    def get_fuel_type(self):
+        with open("CO2_Emissions.csv", mode="r") as file:
+            reader = list(csv.reader(file))
+            for i in range(len(reader)):
+                if reader[i][0].lower() == self.brand_from_user.lower() and reader[i][1].lower() == self.mark_from_user.lower() and reader[i][3].lower() == self.engine_size:
+                    return reader[i][6]
+
+    def co2_anually(self, fuel, avg):
+        if fuel == "D":
+            if float(avg) > 12:
+                coef = random.randint(25, 29)
+            else:
+                coef = random.randint(24, 28)
+        else:
+            if float(avg) > 12:
+                coef = random.randint(21, 24)
+            else:
+                coef = random.randint(20, 23)
+        return (coef + random.random()) / 10
 
     def make_main_buttons(self):
         self.engine_size = 0
@@ -182,13 +204,50 @@ class MyProgram:
 
     def check_several_engines(self):
         lst = []
-        with open("CO2_Emissions_Canada.csv", mode="r") as file:
+        with open("CO2_Emissions.csv", mode="r") as file:
             reader = list(csv.reader(file))
             for i in range(len(reader)):
                 if reader[i][0].lower() == self.brand_from_user.lower() and reader[i][
                     1].lower() == self.mark_from_user.lower():
                     lst.append(reader[i][3])
         return list(dict.fromkeys(lst))
+
+    def count(self, avg):
+        coef = 0
+        if self.get_fuel_type() == "D":
+            coef = 43.02 * 19.98
+        else:
+            coef = 44.21 * 19.13
+        return (self.avg_km_per_year / (2500000*float(avg))) * 0.995 * coef * (44/12)
+
+    def get_hydrocarbons(self, fuel_type, engine_size):
+        print(engine_size)
+        lst = []
+        nox = 0 #оксиды азота
+        brakes = 0 #тормоза
+        tires = 0 #шины
+        if fuel_type == 'D':
+            if float(engine_size) > 2.5:
+                nox = 1.141
+                brakes = 0.003
+                tires = 0.001
+            else:
+                nox = 0.244
+                brakes = 0.003
+                tires = 0.001
+        else:
+            if float(engine_size) > 2.5:
+                nox = 0.674
+                brakes = 0.003
+                tires = 0.001
+            else:
+                nox = 0.331
+                brakes = 0.005
+                tires = 0.001
+        lst.append(nox)
+        lst.append(brakes)
+        lst.append(tires)
+        return lst
 
     def show_info(self):
         self.combo_box_brand.configure(state='disabled')
@@ -197,12 +256,20 @@ class MyProgram:
         tk.Label(self.window, text='Средний расход в городе: ' + temp[0]).grid(row=4, column=0)
         tk.Label(self.window, text='Средний расход на трассе: ' + temp[1]).grid(row=5, column=0)
         tk.Label(self.window, text='Средний расход смешанный: ' + temp[2]).grid(row=6, column=0)
-        tk.Label(self.window, text='Средний расход количество выбросов СО2: ' + temp[4]).grid(row=7, column=0)
+        tk.Label(self.window, text='Среднее количество выбросов СО2: ' + temp[4] + ' г/км').grid(row=7, column=0)
         if int(temp[4]) - self.norm_of_co2 > 0:
             tk.Label(self.window, text='Превышение выбросов СО2 на: ' + str(int(temp[4]) - self.norm_of_co2)).grid(row=8, column=0)
+        co2_anually = self.co2_anually(self.get_fuel_type(), temp[2])
+        self.count(temp[2])
+        tk.Label(self.window, text='Среднее количество выбросов СО2: ' + str(round(co2_anually, 1)) + ' кг/л').grid(row=9, column=0)
         km_anually = self.norm_of_co2 * self.avg_km_per_year / int(temp[4])
-        tk.Label(self.window, text='Безопасное количество километров в год: ' + str(round(km_anually, 1))).grid(row=9, column=0)
-        tk.Button(self.window, text='Сброс', command=self.clear_all).grid(row=10, column=1)
+        emis_lst = self.get_hydrocarbons(self.get_fuel_type(), self.engine_size)
+        tk.Label(self.window, text='Среднее количество выбросов оксидов азота: ' + str(emis_lst[0]) + ' г/м').grid(row=10, column=0)
+        tk.Label(self.window, text='Среднее количество выбросов от тормозов ' + str(emis_lst[1]) + ' г/м').grid(row=11, column=0)
+        tk.Label(self.window, text='Среднее количество выбросов от шин ' + str(emis_lst[2]) + ' г/м').grid(row=12, column=0)
+        tk.Label(self.window, text='Безопасное количество километров в год: ' + str(round(km_anually, 1))).grid(row=13, column=0)
+        tk.Label(self.window, text='Класс опасности топлива: ' + str(4)).grid(row=14, column=0)
+        tk.Button(self.window, text='Сброс', command=self.clear_all).grid(row=15, column=1)
 
     def clear_all(self):
         self.dicCars.clear()
