@@ -1,4 +1,6 @@
 import csv
+import os
+import sys
 import tkinter as tk
 from tkinter import ttk
 import random
@@ -27,8 +29,8 @@ class MyProgram:
         x = (self.screen_width / 2) - (app_width / 2)
         y = (self.screen_height / 2) - (app_height / 2)
         self.window.geometry(f'{app_width}x{app_height}+{int(x)}+{int(y)}')
-        self.combo_box_brand = ttk.Combobox(self.window)
-        self.combo_box_mark = ttk.Combobox(self.window)
+        self.combo_box_brand = ttk.Combobox(self.window, state="readonly")
+        self.combo_box_mark = ttk.Combobox(self.window, state="readonly")
         self.update_dic()
         self.make_main_buttons()
 
@@ -37,7 +39,11 @@ class MyProgram:
         MyProgram.window.mainloop()
 
     def update_dic(self):
-        with open("CO2_Emissions.csv", mode="r") as file:
+        if getattr(sys, 'frozen', False):
+            path = os.path.join(sys._MEIPASS, "files/")
+        else:
+            path = "files/"
+        with open(path + "CO2_Emissions.csv", mode="r") as file:
             reader = list(csv.reader(file))
             temp = []
             flag = len(reader) - 1
@@ -59,7 +65,11 @@ class MyProgram:
 
     def get_emissions(self):
         lst = []
-        with open("CO2_Emissions.csv", mode="r") as file:
+        if getattr(sys, 'frozen', False):
+            path = os.path.join(sys._MEIPASS, "files/")
+        else:
+            path = "files/"
+        with open(path + "CO2_Emissions.csv", mode="r") as file:
             reader = list(csv.reader(file))
             for i in range(len(reader)):
                 if reader[i][0].lower() == self.brand_from_user.lower() and reader[i][1].lower() == self.mark_from_user.lower() and reader[i][3].lower() == self.engine_size:
@@ -71,7 +81,11 @@ class MyProgram:
                     return lst
 
     def get_fuel_type(self):
-        with open("CO2_Emissions.csv", mode="r") as file:
+        if getattr(sys, 'frozen', False):
+            path = os.path.join(sys._MEIPASS, "files/")
+        else:
+            path = "files/"
+        with open(path + "CO2_Emissions.csv", mode="r") as file:
             reader = list(csv.reader(file))
             for i in range(len(reader)):
                 if reader[i][0].lower() == self.brand_from_user.lower() and reader[i][1].lower() == self.mark_from_user.lower() and reader[i][3].lower() == self.engine_size:
@@ -103,7 +117,7 @@ class MyProgram:
         self.window.wait_variable(self.wait_var)
         self.combo_box_brand.unbind('<KeyRelease>')
         brand_label.configure(state='active')
-        self.combo_box_mark.configure(state='active')
+        self.combo_box_mark.configure(state='readonly')
         self.combo_box_mark['values'] = self.dicCars[self.brand_from_user]
         self.combo_box_mark.bind('<KeyRelease>', self.check_input_mark)
         self.combo_box_mark.grid(row=1, column=1)
@@ -204,7 +218,11 @@ class MyProgram:
 
     def check_several_engines(self):
         lst = []
-        with open("CO2_Emissions.csv", mode="r") as file:
+        if getattr(sys, 'frozen', False):
+            path = os.path.join(sys._MEIPASS, "files/")
+        else:
+            path = "files/"
+        with open(path + "CO2_Emissions.csv", mode="r") as file:
             reader = list(csv.reader(file))
             for i in range(len(reader)):
                 if reader[i][0].lower() == self.brand_from_user.lower() and reader[i][
@@ -221,7 +239,6 @@ class MyProgram:
         return (self.avg_km_per_year / (2500000*float(avg))) * 0.995 * coef * (44/12)
 
     def get_hydrocarbons(self, fuel_type, engine_size):
-        print(engine_size)
         lst = []
         nox = 0 #оксиды азота
         brakes = 0 #тормоза
@@ -280,8 +297,8 @@ class MyProgram:
         self.wait_var.set(0)
         for widget in self.window.winfo_children():
             widget.destroy()
-        self.combo_box_brand = ttk.Combobox(self.window)
-        self.combo_box_mark = ttk.Combobox(self.window)
+        self.combo_box_brand = ttk.Combobox(self.window, state="readonly")
+        self.combo_box_mark = ttk.Combobox(self.window, state="readonly")
         self.update_dic()
         self.make_main_buttons()
 
